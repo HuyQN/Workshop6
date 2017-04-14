@@ -38,7 +38,7 @@ function getFeedItemSync(feedItemId) {
 /**
  * Emulates a REST call to get the feed data for a particular user.
  */
-function getFeedData(user) {
+function getFeedData(user, cb) {
   var userData = readDocument('users', user);
   var feedData = readDocument('feeds', userData.feed);
   // While map takes a callback, it is synchronous, not asynchronous.
