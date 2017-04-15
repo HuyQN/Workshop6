@@ -6,6 +6,7 @@ var database = require('./database')
 var readDocument = database.readDocument;
 var bodyParser = require('body-parser');
 var StatusUpdateSchema = require('./schemas/statusupdate.json');
+var CommentSchema = require('./schemas/comment.json');
 var validate = require('express-jsonschema').validate;
 var writeDocument = database.writeDocument;
 var addDocument = database.addDocument;
@@ -133,6 +134,20 @@ function postStatusUpdate(user, location, contents) {
   return newStatusUpdate;
 }
 
+function postComment(owner, user, contents){
+  var time = new Date().getTime();
+  var feedItem = readDocument('feedItems', owner);
+  var newComment = {
+    "author": user,
+    "contents": contents,
+    "postDate": time,
+    "likeCounter": []
+  };
+  feedItem.comments[feedItem.comments.length] = newComment;
+  feedItem = writeDocument('feedItem', feedItem)
+  return feedItem.comments;
+}
+
 // `POST /feeditem { userId: user, location: location, contents: contents  }`
 app.post('/feeditem', validate({ body: StatusUpdateSchema }), function(req, res) {
   // If this function runs, `req.body` passed JSON validation!
@@ -154,6 +169,18 @@ app.post('/feeditem', validate({ body: StatusUpdateSchema }), function(req, res)
     res.status(401).end();
   }
 });
+
+app.post('/comments/:feedItemId',validate({body: CommentSchema}),function(req, res){
+  var body = req.body;
+
+    var newComment = postComment(body.feedItemId, body.author, body.content);
+    res.status(201);
+    res.set('Location','/comments/'+body.feedItemId);
+    res.send(newComment);
+
+});
+
+
 
 // Reset database.
 app.post('/resetdb', function(req, res) {
